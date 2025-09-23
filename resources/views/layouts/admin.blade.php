@@ -22,6 +22,8 @@
     </button>
     <div id="nav" class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ route('admin.reg.index') }}" class="mr-4">Inscrições</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ route('admin.products.index') }}">Produtos</a></li>
         <!-- href="{{ route('registration.form') }}">Inscrever-se</a></li>-->
         <!--<li class="nav-item"><a class="nav-link" href="{{ route('admin.reg.index') }}">Organização</a></li>-->
       </ul>

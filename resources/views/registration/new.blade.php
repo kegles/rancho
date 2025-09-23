@@ -63,8 +63,8 @@
         <div class="row g-3 mt-4 mb-4">
             {{-- Cônjuge --}}
             <div class="col-12">
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" role="switch" id="has_spouse"
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="has_spouse"
                         name="has_spouse" value="1" {{ old('has_spouse') ? 'checked' : '' }}>
                     <label class="form-check-label" for="has_spouse">Meu cônjuge vai comigo</label>
                 </div>

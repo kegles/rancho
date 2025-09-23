@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 @section('title','Admin — Inscrições')
 
 @section('content')
@@ -56,23 +56,23 @@
         </tr>
       </thead>
       <tbody>
-      @foreach ($regs as $r)
+       @forelse ($regs as $r)
         <tr>
-          <td>{{ $r->id }}</td>
-          <td>{{ $r->reg_number }}</td>
-          <td>
-            @php $label = $statusLabels[$r->status] ?? $r->status; @endphp
-            <span class="badge text-bg-{{ $r->status==='PAID'?'success':($r->status==='PENDING'?'warning':'secondary') }}">
-              {{ $label }}
-            </span>
-          </td>
-          <td>{{ $r->participant->name }}</td>
-          <td>{{ $r->participant->callsign }}</td>
-          <td>{{ $r->participant->city }}</td>
-          <td>{{ $categoryLabels[$r->participant->category_code] ?? $r->participant->category_code }}</td>
-          <td>{{ $r->ticket_type }}</td>
-          <td>R$ {{ number_format($r->total_price/100,2,',','.') }}</td>
-          <td>{{ $r->eligible_draw ? 'SIM' : 'NÃO' }}</td>
+            <td>{{ $r->id }}</td>
+            <td>{{ $r->reg_number }}</td>
+            <td>
+                @php $label = $statusLabels[$r->status] ?? $r->status; @endphp
+                <span class="badge text-bg-{{ $r->status==='PAID'?'success':($r->status==='PENDING'?'warning':'secondary') }}">
+                    {{ $label }}
+                </span>
+            </td>
+            <td>{{ $r->participant->name }}</td>
+            <td>{{ $r->participant->callsign }}</td>
+            <td>{{ $r->participant->city }}</td>
+            <td>{{ $categoryLabels[$r->participant->category_code] ?? $r->participant->category_code }}</td>
+            <td>{{ $r->ticket_type }}</td>
+            <td>R$ {{ number_format($r->total_price/100,2,',','.') }}</td>
+            <td>{{ $r->eligible_draw ? 'SIM' : 'NÃO' }}</td>
             <td class="text-end">
                 <div class="d-inline-flex gap-2">
                     @if ($r->status!=='PAID')
@@ -92,7 +92,11 @@
                 </div>
             </td>
         </tr>
-      @endforeach
+        @empty
+        <tr>
+            <td colspan="11" class="text-center text-muted py-4">Nenhuma inscrição.</td>
+        </tr>
+      @endforelse
       </tbody>
     </table>
   </div>

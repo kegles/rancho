@@ -99,12 +99,12 @@
         {{-- Confirmar: grava no banco --}}
         <form method="post" action="{{ route('registration.confirm') }}">
             @csrf
-            <button class="btn btn-success">Confirmar inscrição</button>
+            <button class="btn btn-success btn-lg">Confirmar inscrição</button>
         </form>
 
         {{-- Corrigir: volta ao formulário anterior --}}
         <button type="button" class="btn btn-outline-secondary" onclick="history.go(-1)">
-        Corrigir inscrição
+            Corrigir inscrição
         </button>
     </div>
 @endsection
