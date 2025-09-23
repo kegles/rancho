@@ -1,4 +1,4 @@
-# Rancho do Radioamador Gaúcho 🎙️
+# Rancho do Radioamador Gaúcho
 
 ## Sobre o evento
 O **Rancho do Radioamador Gaúcho** é um dos encontros de radioamadores mais antigos do Brasil ainda em atividade, comemorando em 2025 a sua **70ª edição**.  
