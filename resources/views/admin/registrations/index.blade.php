@@ -71,7 +71,11 @@
             <td>{{ $r->participant->city }}</td>
             <td>{{ $categoryLabels[$r->participant->category_code] ?? $r->participant->category_code }}</td>
             <td>{{ $r->ticket_type }}</td>
-            <td>R$ {{ number_format($r->total_price/100,2,',','.') }}</td>
+            <td>
+            <a href="{{ route('registration.pay', $r->id) }}" target="_blank" class="text-decoration-none">
+                R$ {{ number_format($r->total_price/100,2,',','.') }}
+            </a>
+            </td>
             <td>{{ $r->eligible_draw ? 'SIM' : 'NÃO' }}</td>
             <td class="text-end">
                 <div class="d-inline-flex gap-2">
