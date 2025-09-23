@@ -47,13 +47,16 @@ DB_DATABASE=rancho
 DB_USERNAME=root
 DB_PASSWORD=
 DB_SOCKET=
+```
 
 ### 2. Execute no terminal:
 
+```shell
 chmod -R 777 storage/
 php artisan migrate
 php artisan db:seed
 php artisan config:clear
+```
 
 ### Licença
 
