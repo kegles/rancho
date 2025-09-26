@@ -7,16 +7,7 @@
   @php
     $statusLabels = [
       'PENDING'   => 'Pendente',
-      'PAID'      => 'Pago',
-      'CANCELLED' => 'Cancelado',
-    ];
-    $categoryLabels = [
-      'R'     => 'Radioamador',
-      'C'     => 'Cristal',
-      'A'     => 'Acompanhante',
-      'CH'    => 'Criança',
-      'GUEST' => 'Convidado',
-      'ORG'   => 'Organização',
+      'PAID'      => 'Pago'
     ];
   @endphp
 
@@ -31,15 +22,6 @@
       </select>
     </div>
 
-    <div class="col-md-3">
-      <label for="category" class="form-label fw-semibold">Categoria</label>
-      <select id="category" name="category" class="form-select">
-        <option value="">(todas)</option>
-        @foreach ($categoryLabels as $value => $label)
-          <option value="{{ $value }}" @selected(request('category')===$value)>{{ $label }}</option>
-        @endforeach
-      </select>
-    </div>
 
     <div class="col-md-6 d-flex gap-2 align-items-end">
       <button class="btn btn-primary">Filtrar</button>
@@ -52,7 +34,7 @@
       <thead class="table-light">
         <tr>
           <th>#</th><th>Reg</th><th>Status</th><th>Nome</th><th>Indicativo</th>
-          <th>Cidade</th><th>Categoria</th><th>Tipo</th><th>Total</th><th>Sorteio</th><th></th>
+          <th>Cidade</th><th>Tipo</th><th>Total</th><th>Sorteio</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -66,10 +48,13 @@
                     {{ $label }}
                 </span>
             </td>
-            <td>{{ $r->participant->name }}</td>
+            <td>
+                <a href="{{ route('admin.reg.show', $r->id) }}">
+                    {{ $r->participant->name }}
+                </a>
+            </td>
             <td>{{ $r->participant->callsign }}</td>
             <td>{{ $r->participant->city }}</td>
-            <td>{{ $categoryLabels[$r->participant->category_code] ?? $r->participant->category_code }}</td>
             <td>{{ $r->ticket_type }}</td>
             <td>
             <a href="{{ route('registration.pay', $r->id) }}" target="_blank" class="text-decoration-none">

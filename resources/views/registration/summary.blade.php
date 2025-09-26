@@ -74,24 +74,101 @@
   <div class="card mb-3">
     <div class="card-header">Valores</div>
     <div class="card-body">
-      <table class="table align-middle mb-0">
-        <tbody>
-          <tr>
-            <th style="width:320px">Inscrição base</th>
-            <td>R$ {{ number_format($c['base']/100, 2, ',', '.') }}</td>
-          </tr>
-          @foreach ($c['items'] as $it)
-          <tr>
-            <th>{{ $it['name'] }} <span class="text-muted">× {{ $it['qty'] }}</span></th>
-            <td>R$ {{ number_format($it['subtotal']/100, 2, ',', '.') }}</td>
-          </tr>
-          @endforeach
-          <tr class="table-light">
-            <th class="fs-5">Total</th>
-            <td class="fs-5 fw-bold">R$ {{ number_format($c['total']/100, 2, ',', '.') }}</td>
-          </tr>
-        </tbody>
-      </table>
+
+            @php
+            // formatação de dinheiro em R$
+            $money      = fn (int $cents) => 'R$ ' . number_format($cents / 100, 2, ',', '.');
+            $grandTotal = 0;
+
+            // fator da meia: 50% por padrão, mas você pode ajustar em config/pricing.php
+            $halfFactor = (float) config('pricing.child_half_factor', 0.5);
+
+            // index dos produtos passados pelo controller (ex.: Product::whereIn('sku', ...)->get())
+            $productsBySku = (isset($products) && method_exists($products, 'keyBy'))
+                ? $products->keyBy('sku')
+                : collect();
+            @endphp
+
+
+            @if(empty($c['items']))
+            <p class="text-muted">Nenhum item selecionado.</p>
+            @else
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                    <th>Produto</th>
+                    <th class="text-center">Inteira</th>
+                    <th class="text-center">Meia</th>
+                    <th class="text-end">Preço unit.</th>
+                    <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($c['items'] as $item)
+                    @php
+                        // $item pode ser ARRAY (preview) ou OBJETO (depois que persistir)
+                        // SKU:
+                        $sku = data_get($item, 'sku'); // se seu array usa outra chave, ajuste aqui
+
+                        // Product: primeiro tenta $item['product'] / $item->product; senão procura por SKU
+                        $product = data_get($item, 'product');
+                        if (!$product && $sku && $productsBySku) {
+                            $product = $productsBySku->get($sku);
+                        }
+
+                        // Preço unit (centavos): prioridade unit_price do item; senão price do product; senão 0
+                        $unit = (int) (data_get($item, 'unit_price') ?? data_get($product, 'price', 0));
+
+                        // Quantidades
+                        $qtyFull = (int) data_get($item, 'qty_full', data_get($item, 'qty', 0));
+                        $qtyHalf = (int) data_get($item, 'qty_half', 0);
+
+                        // Se produto não aceita meia, zera meia
+                        $acceptsHalf = (bool) data_get($product, 'is_child_half', false);
+                        if (!$acceptsHalf) {
+                            $qtyHalf = 0;
+                        }
+
+                        // Preço da meia (centavos) sem FP: 50% -> intdiv; caso contrário round
+                        $halfUnit = ($halfFactor === 0.5)
+                            ? intdiv($unit, 2)
+                            : (int) round($unit * $halfFactor);
+
+                        // Total da linha
+                        $lineTotal = ($qtyFull * $unit) + ($qtyHalf * $halfUnit);
+                        $grandTotal += $lineTotal;
+
+                        // Nome para exibição
+                        $productName = data_get($item, 'name')
+                            ?: data_get($product, 'name')
+                            ?: ($sku ?? 'Item');
+
+                    @endphp
+
+                    @php $isBase = in_array(data_get($item,'sku'), ['BASE','BASE_SPOUSE']); @endphp
+                    <tr @class(['table-light' => $isBase])>
+                        <td><strong>{{ $productName }}</strong></td>
+                        <td class="text-center">{{ $qtyFull }}</td>
+                        <td class="text-center">
+                        @if($acceptsHalf) {{ $qtyHalf }} @else — @endif
+                        </td>
+                        <td class="text-end">{{ $money($unit) }}</td>
+                        <td class="text-end">{{ $money($lineTotal) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end">Total</th>
+                        <th class="text-end">{{ $money($grandTotal) }}</th>
+                    </tr>
+                </tfoot>
+                </table>
+            </div>
+            @endif
+
+
     </div>
   </div>
 

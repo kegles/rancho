@@ -41,7 +41,8 @@ class StoreRegistrationRequest extends FormRequest
             // Produtos (checkboxes por SKU)
             'products'            => ['array'],
             'products.*.selected' => ['nullable','boolean'],
-            'products.*.qty'      => ['nullable','integer','min:1','max:999'], // será ignorado e recalculado
+            'products.*.qty_full' => ['nullable','integer','min:0'],
+            'products.*.qty_half' => ['nullable','integer','min:0'],
         ];
     }
 

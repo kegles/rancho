@@ -10,6 +10,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RegistrationsController extends Controller
 {
+
+    public function show($id)
+    {
+        $registration = Registration::with([
+            'participant',
+            'attendees',
+            'items.product',
+        ])->findOrFail($id);
+
+        return view('admin.registrations.show', compact('registration'));
+    }
+
     public function index(Request $req)
     {
         $q = Registration::with('participant')->orderByDesc('id');

@@ -133,29 +133,69 @@
                         <span class="badge text-bg-secondary" id="adults_badge">Adultos: 1</span>
                         <span class="badge text-bg-secondary" id="children_badge">Crianças: 0</span>
                     </div>
-                    </div>
-                    <div class="card-body">
+                </div>
+
+                @php
+                    $adults   = (int) old('adults', $registration->adults ?? 0);
+                    $children = (int) old('children', $registration->children ?? 0);
+                @endphp
+
+                <div class="card-body">
                     @foreach ($products as $p)
+                        @if (in_array($p->sku, ['BASE','BASE_SPOUSE','DONATION']))
+                            @continue
+                        @endif
                         @php
-                        $sku = $p->sku;
-                        $checked = old("products.$sku.selected") ? true : false;
+
+                            $sku = $p->sku;
+
+                            // Defaults conforme a regra pedida:
+                            // - Se is_child_half = true  -> inteira = adultos, meia = crianças
+                            // - Se is_child_half = false -> inteira = adultos + crianças, meia = 0
+                            $defaultFull = $p->is_child_half ? $adults : ($adults + $children);
+                            $defaultHalf = $p->is_child_half ? $children : 0;
+
+                            // Mantém o que o usuário já digitou em caso de erro de validação
+                            $qtyFull = old("products.$sku.qty_full", $defaultFull);
+                            $qtyHalf = old("products.$sku.qty_half", $defaultHalf);
                         @endphp
+
                         <div class="row align-items-center g-2 mb-2">
-                        <div class="col-md-8">
-                            <div class="form-check">
-                            <input class="form-check-input product-check" type="checkbox"
-                                    name="products[{{ $sku }}][selected]" value="1"
-                                    id="chk_{{ $sku }}" @checked($checked)>
-                            <label class="form-check-label" for="chk_{{ $sku }}">
-                                <strong>{{ $p->name }}</strong> — R$ {{ number_format($p->price/100,2,',','.') }}
+                            <div class="col-md-5">
+                            <label class="form-label mb-0" for="qty_full_{{ $sku }}">
+                                <strong>{{ $p->name }}</strong>
+                                — R$ {{ number_format($p->price/100, 2, ',', '.') }}
                             </label>
                             </div>
-                        </div>
-                        {{-- Mantemos um qty oculto só para compatibilidade, mas será ignorado no backend --}}
-                        <input type="hidden" name="products[{{ $sku }}][qty]" value="1">
+
+                            <div class="col-md-3">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Inteira</span>
+                                <input id="qty_full_{{ $sku }}" type="number" min="0" step="1"
+                                    name="products[{{ $sku }}][qty_full]"
+                                    class="form-control text-center"
+                                    value="{{ $qtyFull }}">
+                            </div>
+                            </div>
+
+                            <div class="col-md-3">
+                            @if ($p->is_child_half)
+                                <div class="input-group input-group-sm">
+                                <span class="input-group-text">Meia</span>
+                                <input id="qty_half_{{ $sku }}" type="number" min="0" step="1"
+                                        name="products[{{ $sku }}][qty_half]"
+                                        class="form-control text-center"
+                                        value="{{ $qtyHalf }}">
+                                </div>
+                            @else
+                                <input type="hidden" name="products[{{ $sku }}][qty_half]" value="0">
+                            @endif
+                            </div>
                         </div>
                     @endforeach
-                    </div>
+                </div>
+
+
                 </div>
             </div>
 

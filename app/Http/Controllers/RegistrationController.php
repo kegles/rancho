@@ -20,76 +20,90 @@ class RegistrationController extends Controller
 
     public function preview(StoreRegistrationRequest $req)
     {
-        // Dados já validados (mas ainda não gravados)
+        // 1) Dados validados
         $data = $req->validated();
 
-        // Normalizações
+        // 2) Normalizações
         $data['callsign'] = isset($data['callsign']) ? strtoupper($data['callsign']) : null;
 
-        // Quantidades de pessoas
+        // 3) Quantidades de pessoas
         $hasSpouse       = !empty($data['has_spouse']);
         $companionsCount = (int)($data['companions_count'] ?? 0);
         $childrenCount   = (int)($data['children_count'] ?? 0);
         $adultsCount     = 1 + ($hasSpouse ? 1 : 0) + $companionsCount;
         $totalPeople     = $adultsCount + $childrenCount;
 
-        // Preço base (apenas do titular)
+        // 4) Preço base
         $pricing  = new PricingService();
-        $isExempt = ($data['category_code'] === 'E');
-        $base     = $pricing->basePrice($data['ticket_type'], $data['category_code'], $isExempt);
+        $ticket   = $data['ticket_type']   ?? 'FULL';
+        $cat      = $data['category_code'] ?? 'R';
+        $isExempt = ($cat === 'E');
 
-        // Produtos selecionados
-        $selected = $data['products'] ?? [];
+        $baseParticipant = $pricing->basePrice($ticket, $cat, $isExempt);
+
+        // 5) Produtos selecionados (qty_full/qty_half)
+        $selected = $data['products'] ?? [];   // [SKU => ['qty_full'=>..,'qty_half'=>..], ...]
         $skus     = array_keys($selected);
         $catalog  = $skus ? Product::whereIn('sku', $skus)->get()->keyBy('sku') : collect();
 
         $items = [];
-        $total = $base;
+        $total = 0; // começamos do zero e vamos somando
 
-        foreach ($selected as $sku => $row) {
-            if (empty($row['selected'])) continue;
-            $p = $catalog->get($sku);
-            if (!$p) continue;
-            $price = (int)$p->price;
+        // 5.1) Itens de base (sempre 1x participante; 1x cônjuge se houver)
+        $items[] = [
+            'sku'          => 'BASE',
+            'name'         => 'Inscrição (Participante)',
+            'unit_price'   => $baseParticipant,
+            'qty_full'     => 1,
+            'qty_half'     => 0,
+            'subtotal'     => $baseParticipant,
+            'accepts_half' => false,
+        ];
+        $total += $baseParticipant;
 
-            if ($p->is_child_half) {
-                if ($adultsCount > 0) {
-                    $items[] = [
-                        'sku'        => $p->sku,
-                        'name'       => $p->name,
-                        'unit_price' => $price,
-                        'qty'        => $adultsCount,
-                        'subtotal'   => $price * $adultsCount,
-                        'audience'   => 'adultos',
-                    ];
-                    $total += $price * $adultsCount;
-                }
-                if ($childrenCount > 0) {
-                    $childUnit = intdiv($price, 2);
-                    $items[] = [
-                        'sku'        => $p->sku,
-                        'name'       => $p->name . ' (crianças)',
-                        'unit_price' => $childUnit,
-                        'qty'        => $childrenCount,
-                        'subtotal'   => $childUnit * $childrenCount,
-                        'audience'   => 'criancas',
-                    ];
-                    $total += $childUnit * $childrenCount;
-                }
-            } else {
-                $items[] = [
-                    'sku'        => $p->sku,
-                    'name'       => $p->name,
-                    'unit_price' => $price,
-                    'qty'        => $totalPeople,
-                    'subtotal'   => $price * $totalPeople,
-                    'audience'   => 'todos',
-                ];
-                $total += $price * $totalPeople;
-            }
+        if ($hasSpouse) {
+            $items[] = [
+                'sku'          => 'BASE_SPOUSE',
+                'name'         => 'Inscrição (Cônjuge)',
+                'unit_price'   => $baseParticipant,
+                'qty_full'     => 1,
+                'qty_half'     => 0,
+                'subtotal'     => $baseParticipant,
+                'accepts_half' => false,
+            ];
+            $total += $baseParticipant;
         }
 
-        // Montar attendees p/ mostrar no resumo
+        // 5.2) Demais produtos (com inteira/meia)
+        foreach ($selected as $sku => $row) {
+            $p = $catalog->get($sku);
+            if (!$p) continue;
+
+            $price   = (int) $p->price;                      // centavos
+            $qtyFull = max(0, (int)($row['qty_full'] ?? 0));
+            $qtyHalf = max(0, (int)($row['qty_half'] ?? 0));
+
+            if (!$p->is_child_half) {
+                $qtyHalf = 0; // força zero se produto não aceita meia
+            }
+            if (($qtyFull + $qtyHalf) === 0) continue;
+
+            $halfUnit  = intdiv($price, 2);
+            $lineTotal = ($qtyFull * $price) + ($qtyHalf * $halfUnit);
+            $total    += $lineTotal;
+
+            $items[] = [
+                'sku'          => $p->sku,
+                'name'         => $p->name,
+                'unit_price'   => $price,
+                'qty_full'     => $qtyFull,
+                'qty_half'     => $qtyHalf,
+                'subtotal'     => $lineTotal,
+                'accepts_half' => (bool) $p->is_child_half,
+            ];
+        }
+
+        // 6) Attendees (opcional, como já tinha)
         $attendees = [];
         if ($hasSpouse) {
             $attendees[] = ['role'=>'SPOUSE','label'=>'Cônjuge','name'=>trim($data['spouse_name'] ?? '')];
@@ -101,29 +115,29 @@ class RegistrationController extends Controller
             if ($i < $childrenCount && $n) $attendees[] = ['role'=>'CHILD','label'=>'Criança','name'=>trim($n)];
         }
 
-        // --- Doação de revendedor (soma no preview) ---
+        // 7) Doação de revendedor
         $donationCents = $this->moneyToCents($data['trade_donation_pledge'] ?? 0);
-
         if ($donationCents > 0) {
             $items[] = [
-                'sku'        => 'DONATION',
-                'name'       => 'Doação Revendedor',
-                'unit_price' => $donationCents,
-                'qty'        => 1,
-                'subtotal'   => $donationCents,
-                'audience'   => 'donation',
+                'sku'          => 'DONATION',
+                'name'         => 'Doação Revendedor',
+                'unit_price'   => $donationCents,
+                'qty_full'     => 1,
+                'qty_half'     => 0,
+                'subtotal'     => $donationCents,
+                'accepts_half' => false,
             ];
             $total += $donationCents;
         }
 
-        // Salvar draft na sessão para confirmar depois
+        // 8) Draft
         $draft = [
             'data' => $data,
             'computed' => [
                 'adultsCount'   => $adultsCount,
                 'childrenCount' => $childrenCount,
                 'totalPeople'   => $totalPeople,
-                'base'          => $base,
+                'base'          => $baseParticipant, // mantém se você usa em outro lugar
                 'items'         => $items,
                 'total'         => $total,
                 'attendees'     => $attendees,
@@ -131,9 +145,19 @@ class RegistrationController extends Controller
         ];
         session(['reg.draft' => $draft]);
 
-        // Mostrar resumo
-        return view('registration.summary', ['draft' => $draft]);
+        // 9) Produtos para a view (reaproveita o catálogo)
+        $products = $catalog->values();
+
+        // 10) Compatibilidade com summary que usa $c['items']
+        $c = $draft['computed'];
+
+        return view('registration.summary', [
+            'draft'    => $draft,
+            'c'        => $c,         // <— mantém seu foreach($c['items'])
+            'products' => $products,
+        ]);
     }
+
 
     public function confirm(Request $req)
     {
@@ -185,24 +209,72 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // 4) Itens
-            $products = Product::whereIn('sku', collect($c['items'])->pluck('sku')->unique())->get()->keyBy('sku');
-            $sum = $base;
+            // 4) Itens: gravar tudo que está no summary (base, cônjuge, produtos, doação)
+            $sum = 0;
 
-            foreach ($c['items'] as $it) {
-                $p = $products->get($it['sku']);
-                if (!$p) continue;
+            // SKUs que vieram do summary
+            $skus = collect($c['items'])->pluck('sku')->filter()->unique()->all();
 
-                RegistrationItem::create([
-                    'registration_id' => $registration->id,
-                    'product_id'      => $p->id,
-                    'qty'             => $it['qty'],
-                    'unit_price'      => $it['unit_price'],
-                    'subtotal'        => $it['subtotal'],
-                ]);
-                $sum += $it['subtotal'];
+            // 4.1) Garanta produtos técnicos para SKUs especiais
+            $techNames = [
+                'BASE'        => 'Inscrição (Participante)',
+                'BASE_SPOUSE' => 'Inscrição (Cônjuge)',
+                'DONATION'    => 'Doação Revendedor',
+            ];
+
+            foreach ($skus as $sku) {
+                if (isset($techNames[$sku])) {
+                    \App\Models\Product::firstOrCreate(
+                        ['sku' => $sku],
+                        [
+                            'name'          => $techNames[$sku],
+                            'price'         => 0,       // o valor efetivo vem de unit_price no item
+                            'is_child_half' => false,
+                        ]
+                    );
+                }
             }
 
+            // 4.2) Catálogo (agora inclui os técnicos recém-criados)
+            $catalog = \App\Models\Product::whereIn('sku', $skus)->get()->keyBy('sku');
+
+            // 4.3) Inserir itens exatamente como no summary
+            foreach ($c['items'] as $it) {
+                $sku       = $it['sku'] ?? null;
+                if (!$sku) continue;
+
+                $p         = $catalog->get($sku);
+                if (!$p) continue; // segurança; após firstOrCreate, deve existir
+
+                $unitPrice = (int) ($it['unit_price'] ?? 0);          // centavos
+                $qtyFull   = max(0, (int) ($it['qty_full'] ?? ($it['qty'] ?? 0)));
+                $qtyHalf   = max(0, (int) ($it['qty_half'] ?? 0));
+
+                // se produto não aceita meia, força zero
+                if (!$p->is_child_half) {
+                    $qtyHalf = 0;
+                }
+
+                // calcula subtotal (meia = 50%)
+                $halfUnit  = intdiv($unitPrice, 2);
+                $lineTotal = ($qtyFull * $unitPrice) + ($qtyHalf * $halfUnit);
+                $sum      += $lineTotal;
+
+                \App\Models\RegistrationItem::create([
+                    'registration_id' => $registration->id,
+                    'product_id'      => $p->id,
+                    'sku'             => $p->sku,
+                    'qty_full'        => $qtyFull,
+                    'qty_half'        => $qtyHalf,
+                    'unit_price'      => $unitPrice,
+                    // Se sua tabela tiver a coluna 'subtotal', pode gravar também:
+                    // 'subtotal'     => $lineTotal,
+                    // Se tiver a coluna 'name' no item e quiser guardar o rótulo exibido:
+                    // 'name'         => $it['name'] ?? null,
+                ]);
+            }
+
+            // total da inscrição = soma dos itens do summary (não some "base" de novo aqui)
             $registration->update(['total_price' => $sum]);
 
             // Limpa draft da sessão

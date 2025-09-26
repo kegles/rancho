@@ -4,6 +4,8 @@
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RegistrationsController;
+use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Middleware\OrgAuth;
 
 Route::redirect('/', '/registration/new');
 
@@ -20,12 +22,19 @@ Route::prefix('registration')->group(function(){
   Route::get('pay/{id}/qr.svg', [RegistrationController::class, 'qr'])->name('registration.qr');
 });
 
-Route::prefix('admin')->group(function(){
+Route::prefix('admin')->group(function () {
+    // -- auth (out of group 'org'!) --
+    Route::get('login',  [AdminAuthController::class, 'show'])->name('admin.login');
+    Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login.post');
+});
+
+Route::prefix('admin')->middleware('org')->group(function(){
     // -- registrations
     Route::get('registrations', [RegistrationsController::class, 'index'])->name('admin.reg.index');
     Route::post('registrations/{id}/paid', [RegistrationsController::class, 'markPaid'])->name('admin.reg.paid');
     Route::get('registrations/export', [RegistrationsController::class, 'exportCsv'])->name('admin.reg.export');
     Route::delete('registrations/{id}', [RegistrationsController::class, 'destroy'])->name('admin.reg.destroy');
+    Route::get('registrations/{id}',            [RegistrationsController::class, 'show'])->name('admin.reg.show');
     //-- products
     Route::get('products',                     [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('products/create',              [ProductController::class, 'create'])->name('admin.products.create');
