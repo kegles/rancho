@@ -19,7 +19,7 @@
 
   <form class="row g-3 align-items-end mb-3" method="get">
     <div class="col-md-4">
-      <label for="q" class="form-label fw-semibold">Buscar por nome ou SKU</label>
+      <label for="q" class="form-label fw-semibold">Buscar por nome ou código</label>
       <input
         id="q"
         name="q"
@@ -39,8 +39,8 @@
     <table class="table table-striped align-middle">
       <thead class="table-light">
         <tr>
-          <th>SKU</th>
-          <th>Nome</th>
+          <th>Código</th>
+          <th>Descrição</th>
           <th>Preço</th>
           <th>Meia p/ criança</th>
           <th>Ativo</th>

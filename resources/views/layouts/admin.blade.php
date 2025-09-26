@@ -21,12 +21,22 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div id="nav" class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="{{ route('admin.reg.index') }}" class="mr-4">Inscrições</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ route('admin.products.index') }}">Produtos</a></li>
-        <!-- href="{{ route('registration.form') }}">Inscrever-se</a></li>-->
-        <!--<li class="nav-item"><a class="nav-link" href="{{ route('admin.reg.index') }}">Organização</a></li>-->
-      </ul>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item me-4">
+                <a href="{{ route('admin.reg.index') }}"
+                @class(['nav-link', 'active fw-bold' => request()->routeIs('admin.reg.*')])
+                @if (request()->routeIs('admin.reg.*')) aria-current="page" @endif>
+                Inscrições
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('admin.products.index') }}"
+                @class(['nav-link', 'active fw-bold' => request()->routeIs('admin.products.*')])
+                @if (request()->routeIs('admin.products.*')) aria-current="page" @endif>
+                Produtos
+                </a>
+            </li>
+        </ul>
     </div>
   </div>
 </nav>

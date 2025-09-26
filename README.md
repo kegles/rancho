@@ -35,6 +35,7 @@ Adapte as variáveis de ambiente:
 RANCHO_PIX_KEY="as23f3"                              # chave pix (aleatória) que receberá os pagamentos
 RANCHO_PIX_NAME="70 RANCHO DO RADIOAMADOR GAUCHO"    # nome da edição (sem caracteres especiais)
 RANCHO_MERCHANT_CITY="SANTA MARIA"                   # cidade da edição (sem caracteres especiais)
+RANCHO_ORG_PASSWORD=senhateste                       # senha para acesso ao painel de administração
 
 # App
 APP_URL=http://rancho.com.br                         # host da aplicação

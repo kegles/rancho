@@ -50,10 +50,10 @@
 
             <div class="col-md-6">
                 <label class="form-label fw-bold">Tipo de inscrição (titular)</label>
-                @php $cat = old('category_code','V'); @endphp
+                @php $cat = old('category_code','R'); @endphp
                 <select name="category_code" class="form-select" required>
-                    <option value="V" @selected($cat==='V')>Visitante</option>
                     <option value="R" @selected($cat==='R')>Radioamador(a)</option>
+                    <option value="V" @selected($cat==='V')>Visitante</option>
                     <option value="E" @selected($cat==='E')>Convidado(a) especial</option>
                 </select>
             </div>
@@ -128,7 +128,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Itens adicionais</span>
+                    <span>Refeições e adicionais</span>
                     <div class="d-flex gap-2 flex-wrap">
                         <span class="badge text-bg-secondary" id="adults_badge">Adultos: 1</span>
                         <span class="badge text-bg-secondary" id="children_badge">Crianças: 0</span>

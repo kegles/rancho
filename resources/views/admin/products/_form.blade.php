@@ -1,8 +1,8 @@
 {{-- resources/views/admin/products/_form.blade.php --}}
 <div class="row g-3">
   {{-- SKU --}}
-  <div class="col-md-6">
-    <label for="sku" class="form-label fw-semibold">SKU</label>
+  <div class="col-md-3">
+    <label for="sku" class="form-label fw-semibold">Código</label>
     <input
       id="sku"
       name="sku"
@@ -10,6 +10,7 @@
       class="form-control @error('sku') is-invalid @enderror"
       value="{{ old('sku', $product->sku ?? '') }}"
       required
+      autofocus
     >
     @error('sku')
       <div class="invalid-feedback">{{ $message }}</div>
@@ -17,8 +18,8 @@
   </div>
 
   {{-- Nome --}}
-  <div class="col-md-6">
-    <label for="name" class="form-label fw-semibold">Nome</label>
+  <div class="col-md-9">
+    <label for="name" class="form-label fw-semibold">Descrição</label>
     <input
       id="name"
       name="name"
