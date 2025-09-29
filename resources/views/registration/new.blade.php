@@ -60,16 +60,16 @@
 
         </div>
 
-        <div class="row g-3 mt-4 mb-4">
+        <div class="row g-3 mt-4 mb-4 bg-light border pb-3">
             {{-- Cônjuge --}}
             <div class="col-12">
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="has_spouse"
+                <div class="form-check">
+                    <input class="form-check-input border border-secondary" type="checkbox" id="has_spouse"
                         name="has_spouse" value="1" {{ old('has_spouse') ? 'checked' : '' }}>
                     <label class="form-check-label" for="has_spouse">Meu cônjuge vai comigo</label>
                 </div>
-                <div id="spouse_block" class="col-12 col-lg-9" style="display:none">
-                    <div class="row mb-2">
+                <div id="spouse_block" class="col-12" style="display:none">
+                    <div class="row mt-3">
                         <div class="col-7">
                             <label class="form-label fw-bold">Nome do cônjuge</label>
                             <input class="form-control" name="spouse_name" value="{{ old('spouse_name') }}">
@@ -346,13 +346,40 @@ function syncProductLimits(){
   }
 }
 
-function toggleSpouse(){
-  var chk = getEl('has_spouse');
-  var block = getEl('spouse_block');
-  if (block) block.style.display = (chk && chk.checked) ? 'block' : 'none';
+function toggleSpouse() {
+  var chk   = typeof getEl === 'function' ? getEl('has_spouse') : document.getElementById('has_spouse');
+  var block = typeof getEl === 'function' ? getEl('spouse_block') : document.getElementById('spouse_block');
+  if (!block) {
+    updatePeopleBadge();
+    syncProductLimits();
+    return;
+  }
+  var show = !!(chk && chk.checked);
+  // Mostrar/ocultar cobrindo os casos: inline style, hidden, d-none (Bootstrap)
+  if (show) {
+    block.style.removeProperty('display'); // volta ao display padrão do CSS
+    block.hidden = false;
+    block.classList.remove('d-none');
+    // Focar após o repaint
+    var input = (typeof getEl === 'function' ? getEl('spouse_name') : document.getElementById('spouse_name'))
+             || document.querySelector('[name="spouse_name"]');
+
+    if (input) {
+      setTimeout(function () {
+        input.focus();
+        if (input.select && input.value) input.select(); // seleciona texto se já houver
+        // input.scrollIntoView({block:'center', behavior:'smooth'}); // opcional
+      }, 0);
+    }
+  } else {
+    block.style.display = 'none';
+    block.hidden = true;
+    block.classList.add('d-none');
+  }
   updatePeopleBadge();
   syncProductLimits();
 }
+
 
 function renderList(containerId, count, baseName, oldValues){
   if (!oldValues) oldValues = [];
