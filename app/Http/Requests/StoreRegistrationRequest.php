@@ -20,8 +20,14 @@ class StoreRegistrationRequest extends FormRequest
             'category_code' => ['required','in:V,R,E'],
 
             // Troca-Troca (inalterado)
-            'trade_role'    => ['nullable','in:AMADOR,REVENDEDOR'],
-            'trade_donation_pledge' => ['nullable','numeric','min:150'],
+            'trade_role'             => ['nullable','in:AMADOR,REVENDEDOR,EXPOSITOR'],
+            // Só valida a doação quando for REVENDEDOR; caso contrário, ignora o campo
+            'trade_donation_pledge'  => [
+                'nullable',
+                'integer',
+                'min:150',
+                'required_if:trade_role,REVENDEDOR',
+            ],
 
             'ticket_type'   => ['required','in:FULL,DAY'],
             'days'          => ['nullable','numeric','min:1','max:31'],
@@ -29,6 +35,8 @@ class StoreRegistrationRequest extends FormRequest
             // Acompanhantes
             'has_spouse'            => ['nullable','boolean'],
             'spouse_name'           => ['nullable','string','max:255'],
+            'spouse_callsign'       => ['nullable','string','max:20'],
+
             'companions_count'      => ['nullable','integer','min:0','max:20'],
             'companions_names'      => ['array'],
             'companions_names.*'    => ['nullable','string','max:255'],
@@ -46,6 +54,12 @@ class StoreRegistrationRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('trade_role') !== 'REVENDEDOR') {
+            $this->merge(['trade_donation_pledge' => NULL]);
+        }
+    }
 
     public function withValidator($validator)
     {

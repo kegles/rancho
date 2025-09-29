@@ -14,7 +14,7 @@ class RegistrationController extends Controller
 {
     public function createForm(Request $request)
     {
-        $products = Product::orderBy('name')->get();
+        $products = Product::orderBy('sort_order','asc')->get();
         return view('registration.new', compact('products'));
     }
 
@@ -106,7 +106,14 @@ class RegistrationController extends Controller
         // 6) Attendees (opcional, como já tinha)
         $attendees = [];
         if ($hasSpouse) {
-            $attendees[] = ['role'=>'SPOUSE','label'=>'Cônjuge','name'=>trim($data['spouse_name'] ?? '')];
+            $attendees[] = [
+                'role'=>'SPOUSE',
+                'label'=>'Cônjuge',
+                'name'=>trim($data['spouse_name'] ?? ''),
+                'callsign' => isset($data['spouse_callsign']) && $data['spouse_callsign'] !== ''
+                                ? strtoupper(trim($data['spouse_callsign']))
+                                : null,
+            ];
         }
         foreach (($data['companions_names'] ?? []) as $i => $n) {
             if ($i < $companionsCount && $n) $attendees[] = ['role'=>'ACCOMP','label'=>'Acompanhante','name'=>trim($n)];
@@ -116,8 +123,9 @@ class RegistrationController extends Controller
         }
 
         // 7) Doação de revendedor
+        $role          = $data['trade_role'] ?? null;
         $donationCents = $this->moneyToCents($data['trade_donation_pledge'] ?? 0);
-        if ($donationCents > 0) {
+        if ($role === 'REVENDEDOR' && $donationCents > 0) {
             $items[] = [
                 'sku'          => 'DONATION',
                 'name'         => 'Doação Revendedor',
@@ -206,6 +214,7 @@ class RegistrationController extends Controller
                     'registration_id' => $registration->id,
                     'role'            => $a['role'], // SPOUSE | ACCOMP | CHILD
                     'name'            => $a['name'],
+                    'callsign'        => $a['callsign'] ?? null,
                 ]);
             }
 
@@ -242,6 +251,11 @@ class RegistrationController extends Controller
             foreach ($c['items'] as $it) {
                 $sku       = $it['sku'] ?? null;
                 if (!$sku) continue;
+
+                // Se não é REVENDEDOR, nunca grava item de doação
+                if (($it['sku'] ?? null) === 'DONATION' && (($d['trade_role'] ?? null) !== 'REVENDEDOR')) {
+                    continue;
+                }
 
                 $p         = $catalog->get($sku);
                 if (!$p) continue; // segurança; após firstOrCreate, deve existir

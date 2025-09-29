@@ -20,7 +20,7 @@ class ProductController extends Controller
         $q = trim((string)$request->get('q',''));
         $products = Product::query()
         ->when($q, fn($qb) => $qb->where('name','like',"%{$q}%")->orWhere('sku','like',"%{$q}%"))
-        ->orderBy('name')
+        ->orderBy('sort_order','asc')
         ->paginate(20)
         ->withQueryString();
         return view('admin.products.index', compact('products','q'));
@@ -38,7 +38,7 @@ class ProductController extends Controller
     {
         try {
             $product = new Product();
-            $product->fill($request->only(['sku','name','is_child_half','active']));
+            $product->fill($request->only(['sku','name','is_child_half','sort_order','active']));
             $product->price_brl = $request->input('price_brl'); // mutator converte p/ centavos
             $product->save();
 
@@ -62,7 +62,7 @@ class ProductController extends Controller
     public function update(ProductUpdateRequest $request, Product $product): \Illuminate\Http\RedirectResponse
     {
         try {
-            $product->fill($request->only(['sku','name','is_child_half','active']));
+            $product->fill($request->only(['sku','name','is_child_half','sort_order','active']));
             $product->price_brl = $request->input('price_brl');
             $product->save();
 

@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title','Login do Admin')
+@section('title','Acesso ao painel de administração')
 
 @section('content')
 <div class="row justify-content-center mt-5">
   <div class="col-md-4">
     <div class="card shadow-sm">
-      <div class="card-header">Acesso ao Admin</div>
+      <div class="card-header">Acesso ao painel de administração</div>
       <div class="card-body">
         @if (session('error'))
           <div class="alert alert-danger">{{ session('error') }}</div>

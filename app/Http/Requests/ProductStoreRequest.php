@@ -19,6 +19,7 @@ class ProductStoreRequest extends FormRequest
             'name'=> ['required','string','max:255'],
             'price_brl' => ['required','string'], // será convertido p/ centavos
             'is_child_half' => ['sometimes','boolean'],
+            'sort_order'  => ['nullable','integer','min:1','max:50'],
             'active' => ['sometimes','boolean'],
         ];
     }

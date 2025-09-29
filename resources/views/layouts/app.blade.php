@@ -35,7 +35,7 @@
 
 <footer class="border-top py-3 mt-5">
   <div class="container small text-muted d-flex justify-content-between">
-    <span>Copyleft {{ date('Y') }} - <a href="{{ route('admin.reg.index') }}">Organização</a></span>
+    <span>Copyleft {{ date('Y') }} - <a href="{{ route('admin.login') }}">Organização</a></span>
     <span><a href="https://www.kegles.com.br/contrate" target="_blank">PY3NT</a></span>
   </div>
 </footer>

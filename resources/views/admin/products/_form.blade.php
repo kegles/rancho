@@ -52,6 +52,21 @@
     @enderror
   </div>
 
+  {{-- Ordenação --}}
+<div class="col-md-3">
+  <label class="form-label">Ordem de exibição</label>
+  @php
+    $current = (int) old('sort_order', $product->sort_order ?? 1);
+    $current = max(1, min(50, $current)); // garante 1..50
+  @endphp
+  <select name="sort_order" class="form-select">
+    @for ($i = 1; $i <= 50; $i++)
+      <option value="{{ $i }}" @selected($i === $current)>{{ $i }}º</option>
+    @endfor
+  </select>
+</div>
+
+
   {{-- Flags --}}
   <div class="col-12 d-flex flex-wrap gap-4">
     {{-- Meia para crianças --}}

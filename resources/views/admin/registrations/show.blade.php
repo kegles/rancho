@@ -97,6 +97,9 @@
           @foreach($reg->attendees as $a)
             <li>
               <strong>{{ $label($T_ROLE, $a->role) }}</strong>: {{ $a->name }}
+              @if(!empty($a->callsign))
+                <span class="text-muted">({{ $a->callsign }})</span>
+              @endif
             </li>
           @endforeach
         </ul>

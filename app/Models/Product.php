@@ -6,11 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model {
-    protected $fillable = ['sku','name','price','is_child_half','active'];
+    protected $fillable = ['sku','name','price','is_child_half','sort_order','active'];
 
     protected $casts = [
         'price' => 'integer', // centavos
         'is_child_half' => 'boolean',
+        'sort_order' => 'integer',
         'active' => 'boolean',
     ];
 

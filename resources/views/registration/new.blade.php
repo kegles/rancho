@@ -68,9 +68,18 @@
                         name="has_spouse" value="1" {{ old('has_spouse') ? 'checked' : '' }}>
                     <label class="form-check-label" for="has_spouse">Meu cônjuge vai comigo</label>
                 </div>
-                <div id="spouse_block" class="col-6" style="display:none">
-                    <label class="form-label fw-bold">Nome do cônjuge</label>
-                    <input class="form-control" name="spouse_name" value="{{ old('spouse_name') }}">
+                <div id="spouse_block" class="col-12 col-lg-9" style="display:none">
+                    <div class="row mb-2">
+                        <div class="col-8">
+                            <label class="form-label fw-bold">Nome do cônjuge</label>
+                            <input class="form-control" name="spouse_name" value="{{ old('spouse_name') }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Indicativo <span class="text-muted">(opcional)</span></label>
+                            <input class="form-control text-uppercase" name="spouse_callsign"
+                                value="{{ old('spouse_callsign') }}">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -79,8 +88,12 @@
             {{-- Crianças --}}
             <div class="col-md-3">
                 <label class="form-label">Número de crianças</label>
-                <input type="number" min="0" class="form-control" id="children_count" name="children_count"
-                        value="{{ old('children_count', 0) }}">
+                @php $childrenOld = (int) old('children_count', 0); @endphp
+                <select id="children_count" name="children_count" class="form-select">
+                    @for ($i = 0; $i <= 10; $i++)
+                    <option value="{{ $i }}" @selected($i === $childrenOld)>{{ $i }}</option>
+                    @endfor
+                </select>
             </div>
         </div>
         <div class="row g-3">
@@ -96,8 +109,12 @@
             {{-- Acompanhantes --}}
             <div class="col-md-3">
                 <label class="form-label">Demais acompanhantes</label>
-                <input type="number" min="0" class="form-control" id="companions_count" name="companions_count"
-                        value="{{ old('companions_count', 0) }}">
+                @php $companionsOld = (int) old('companions_count', 0); @endphp
+                <select id="companions_count" name="companions_count" class="form-select">
+                    @for ($i = 0; $i <= 10; $i++)
+                    <option value="{{ $i }}" @selected($i === $companionsOld)>{{ $i }}</option>
+                    @endfor
+                </select>
             </div>
         </div>
         <div class="row g-3 mt-2">
@@ -142,58 +159,64 @@
 
                 <div class="card-body">
                     @foreach ($products as $p)
-                        @if (in_array($p->sku, ['BASE','BASE_SPOUSE','DONATION']))
-                            @continue
-                        @endif
+                        @if (in_array($p->sku, ['BASE','BASE_SPOUSE','DONATION'])) @continue @endif
+
                         @php
+                        $sku = $p->sku;
 
-                            $sku = $p->sku;
+                        // valores padrão para primeira carga (serão recalculados via JS)
+                        $adults   = 1 + (old('has_spouse') ? 1 : 0) + (int) old('companions_count', 0);
+                        $children = (int) old('children_count', 0);
 
-                            // Defaults conforme a regra pedida:
-                            // - Se is_child_half = true  -> inteira = adultos, meia = crianças
-                            // - Se is_child_half = false -> inteira = adultos + crianças, meia = 0
-                            $defaultFull = $p->is_child_half ? $adults : ($adults + $children);
-                            $defaultHalf = $p->is_child_half ? $children : 0;
+                        $defaultFull = $p->is_child_half ? $adults : ($adults + $children);
+                        $defaultHalf = $p->is_child_half ? $children : 0;
 
-                            // Mantém o que o usuário já digitou em caso de erro de validação
-                            $qtyFull = old("products.$sku.qty_full", $defaultFull);
-                            $qtyHalf = old("products.$sku.qty_half", $defaultHalf);
+                        $qtyFull = (int) old("products.$sku.qty_full", $defaultFull);
+                        $qtyHalf = (int) old("products.$sku.qty_half", $defaultHalf);
                         @endphp
 
-                        <div class="row align-items-center g-2 mb-2">
-                            <div class="col-md-5">
+                        <div class="row align-items-center g-2 mb-2 product-row"
+                            data-sku="{{ $sku }}"
+                            data-ischildhalf="{{ $p->is_child_half ? 1 : 0 }}">
+                        <div class="col-md-5">
                             <label class="form-label mb-0" for="qty_full_{{ $sku }}">
-                                <strong>{{ $p->name }}</strong>
-                                — R$ {{ number_format($p->price/100, 2, ',', '.') }}
+                            <strong>{{ $p->name }}</strong>
+                            — R$ {{ number_format($p->price/100, 2, ',', '.') }}
                             </label>
-                            </div>
+                        </div>
 
-                            <div class="col-md-3">
+                        <div class="col-md-3">
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text">Inteira</span>
-                                <input id="qty_full_{{ $sku }}" type="number" min="0" step="1"
-                                    name="products[{{ $sku }}][qty_full]"
-                                    class="form-control text-center"
-                                    value="{{ $qtyFull }}">
+                            <span class="input-group-text">Inteira</span>
+                            @php $curFull = max(0, $qtyFull); @endphp
+                            <select id="qty_full_{{ $sku }}" name="products[{{ $sku }}][qty_full]" class="form-select form-select-sm qty-full">
+                                {{-- opções serão recriadas pelo JS; estas iniciais são só para primeira renderização --}}
+                                @for ($i = 0; $i <= max(0,$defaultFull); $i++)
+                                <option value="{{ $i }}" @selected($i === $curFull)>{{ $i }}</option>
+                                @endfor
+                            </select>
                             </div>
-                            </div>
+                        </div>
 
-                            <div class="col-md-3">
+                        <div class="col-md-3">
                             @if ($p->is_child_half)
-                                <div class="input-group input-group-sm">
+                            <div class="input-group input-group-sm">
                                 <span class="input-group-text">Meia</span>
-                                <input id="qty_half_{{ $sku }}" type="number" min="0" step="1"
-                                        name="products[{{ $sku }}][qty_half]"
-                                        class="form-control text-center"
-                                        value="{{ $qtyHalf }}">
-                                </div>
-                            @else
-                                <input type="hidden" name="products[{{ $sku }}][qty_half]" value="0">
-                            @endif
+                                @php $curHalf = max(0, $qtyHalf); @endphp
+                                <select id="qty_half_{{ $sku }}" name="products[{{ $sku }}][qty_half]" class="form-select form-select-sm qty-half">
+                                @for ($i = 0; $i <= max(0,$defaultHalf); $i++)
+                                    <option value="{{ $i }}" @selected($i === $curHalf)>{{ $i }}</option>
+                                @endfor
+                                </select>
                             </div>
+                            @else
+                            <input type="hidden" name="products[{{ $sku }}][qty_half]" value="0">
+                            @endif
+                        </div>
                         </div>
                     @endforeach
                 </div>
+
 
 
                 </div>
@@ -235,54 +258,131 @@
   </div>
 @endsection
 
+<div id="old-meta"
+     data-companions='@json(old("companions_names", []))'
+     data-children='@json(old("children_names", []))'
+     style="display:none"></div>
+
 @push('scripts')
 <script>
-function toggleSpouse(){
-  const chk = document.getElementById('has_spouse');
-  document.getElementById('spouse_block').style.display = chk.checked ? 'block' : 'none';
-  updatePeopleBadge();
+const MAX_LIST_INPUTS = 20; // limite para listas de nomes
+var metaEl = document.getElementById('old-meta');
+
+function getEl(id){ return document.getElementById(id); }
+
+function readOld(name){
+    try {
+        if (!metaEl) return [];
+        var raw = metaEl.dataset[name] || '[]';
+        return JSON.parse(raw);
+    } catch(e){ return []; }
 }
 
-function renderList(containerId, count, baseName, oldValues = []){
-  const c = document.getElementById(containerId);
+function computeCounts(){
+  var spouseEl   = getEl('has_spouse');
+  var companions = getEl('companions_count');
+  var childrenEl = getEl('children_count');
+
+  var hasSpouse  = (spouseEl && spouseEl.checked) ? 1 : 0;
+  var compVal    = (companions && companions.value) ? companions.value : '0';
+  var childVal   = (childrenEl && childrenEl.value) ? childrenEl.value : '0';
+
+  var companionsCount = parseInt(compVal, 10) || 0;
+  var childrenCount   = parseInt(childVal, 10) || 0;
+  var adults          = 1 + hasSpouse + companionsCount; // 1 = titular
+
+  return { adults: adults, children: childrenCount, total: adults + childrenCount };
+}
+
+function updatePeopleBadge(){
+  var counts = computeCounts();
+  var elAdults   = getEl('adults_badge');
+  var elChildren = getEl('children_badge');
+  if (elAdults)   elAdults.textContent   = 'Adultos: '  + counts.adults;
+  if (elChildren) elChildren.textContent = 'Crianças: ' + counts.children;
+}
+
+function optionRange(selectEl, max, selected){
+  if (!selectEl) return;
+  var prev = (typeof selected !== 'undefined')
+               ? parseInt(String(selected),10) || 0
+               : (parseInt(String(selectEl.value || 0),10) || 0);
+  var newVal = Math.min(Math.max(prev, 0), Math.max(0, max|0));
+  var frag = document.createDocumentFragment();
+  for (var i=0; i<=max; i++){
+    var opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = String(i);
+    opt.selected = true;
+    frag.appendChild(opt);
+  }
+  selectEl.innerHTML = '';
+  selectEl.appendChild(frag);
+}
+
+function syncProductLimits(){
+  var counts = computeCounts();
+  var adults = counts.adults;
+  var children = counts.children;
+
+  var rows = document.querySelectorAll('.product-row');
+  for (var r=0; r<rows.length; r++){
+    var row = rows[r];
+    var isHalf = row.getAttribute('data-ischildhalf') === '1';
+
+    var fullSel = row.querySelector('.qty-full');
+    var halfSel = row.querySelector('.qty-half');
+
+    // regras:
+    // - is_child_half = true  -> inteira: 0..adultos, meia: 0..crianças
+    // - is_child_half = false -> inteira: 0..(adultos+crianças), meia: 0
+    var maxFull = isHalf ? adults : (adults + children);
+    optionRange(fullSel, maxFull);
+
+    if (halfSel){
+      var maxHalf = isHalf ? children : 0;
+      optionRange(halfSel, maxHalf);
+    }
+  }
+}
+
+function toggleSpouse(){
+  var chk = getEl('has_spouse');
+  var block = getEl('spouse_block');
+  if (block) block.style.display = (chk && chk.checked) ? 'block' : 'none';
+  updatePeopleBadge();
+  syncProductLimits();
+}
+
+function renderList(containerId, count, baseName, oldValues){
+  if (!oldValues) oldValues = [];
+  var c = getEl(containerId);
+  if (!c) return;
   c.innerHTML = '';
-  count = parseInt(count || 0, 10);
-  for (let i=0;i<count;i++){
-    const div = document.createElement('div');
+  count = Math.min(parseInt(count || 0, 10) || 0, MAX_LIST_INPUTS);
+  for (var i=0; i<count; i++){
+    var div = document.createElement('div');
     div.className = 'mb-2';
-    div.innerHTML = `
-      <label class="form-label">${baseName} #${i+1}</label>
-      <input class="form-control" name="${containerId.replace('_names','')}_names[${i}]" value="${oldValues[i] ?? ''}">
-    `;
+    var val = (oldValues[i] || '').toString().replace(/"/g,'&quot;');
+    div.innerHTML = ''
+      + '<label class="form-label">'+ baseName +' #'+ (i+1) +'</label>'
+      + '<input class="form-control" name="'+ containerId.replace('_names','') +'_names['+ i +']" value="'+ val +'">';
     c.appendChild(div);
   }
 }
 
-function updatePeopleBadge(){
-  const hasSpouse = document.getElementById('has_spouse').checked ? 1 : 0;
-  const companions = parseInt(document.getElementById('companions_count').value || 0,10);
-  const children   = parseInt(document.getElementById('children_count').value || 0,10);
-  const adults = 1 + hasSpouse + companions; // 1 = titular
-  const elAdults   = document.getElementById('adults_badge');
-  const elChildren = document.getElementById('children_badge');
-  if (elAdults)   elAdults.textContent   = 'Adultos: '  + adults;
-  if (elChildren) elChildren.textContent = 'Crianças: ' + children;
-}
-
-/* === mostra/esconde campo doação quando trade_role = REVENDEDOR === */
 function syncDonation(){
-  const roleSelect = document.getElementById('trade_role');
-  const donationDiv = document.getElementById('donation-field');
-  const isRevendedor = roleSelect && roleSelect.value === 'REVENDEDOR';
+  var roleSelect = getEl('trade_role');
+  var donationDiv = getEl('donation-field');
+  var isRevendedor = roleSelect && roleSelect.value === 'REVENDEDOR';
   if (donationDiv) donationDiv.style.display = isRevendedor ? 'block' : 'none';
 }
 
-/* === NOVO: exibe o seletor de dia quando ticket_type = DAY === */
 function syncDay(){
-  const ticketEl = document.getElementById('ticket_type');
-  const dayBlock = document.getElementById('day-only');
-  const daySel   = document.getElementById('day_select');
-  const isDay    = ticketEl && ticketEl.value === 'DAY';
+  var ticketEl = getEl('ticket_type');
+  var dayBlock = getEl('day-only');
+  var daySel   = getEl('day_select');
+  var isDay    = (ticketEl && ticketEl.value === 'DAY');
   if (dayBlock) dayBlock.style.display = isDay ? 'block' : 'none';
   if (daySel)   daySel.required = isDay;
 }
@@ -290,36 +390,44 @@ function syncDay(){
 document.addEventListener('DOMContentLoaded', function(){
   // spouse
   toggleSpouse();
-  document.getElementById('has_spouse').addEventListener('change', toggleSpouse);
+  var spouseEl = getEl('has_spouse');
+  if (spouseEl) spouseEl.addEventListener('change', toggleSpouse);
 
   // companions
-  const companionsCount = document.getElementById('companions_count');
-  const oldCompanions = @json(old('companions_names', []));
-  renderList('companions_names', companionsCount.value, 'Acompanhante', oldCompanions);
-  companionsCount.addEventListener('input', function(){
+  var companionsSelect = getEl('companions_count');
+  var oldCompanions = readOld('companions'); // vem de data-companions
+  renderList('companions_names', companionsSelect ? companionsSelect.value : 0, 'Acompanhante', oldCompanions);
+  if (companionsSelect) companionsSelect.addEventListener('change', function(){
     renderList('companions_names', this.value, 'Acompanhante');
     updatePeopleBadge();
+    syncProductLimits();
   });
 
   // children
-  const childrenCount = document.getElementById('children_count');
-  const oldChildren = @json(old('children_names', []));
-  renderList('children_names', childrenCount.value, 'Criança', oldChildren);
-  childrenCount.addEventListener('input', function(){
+  var childrenSelect = getEl('children_count');
+  var oldChildren   = readOld('children');   // vem de data-children
+  renderList('children_names', childrenSelect ? childrenSelect.value : 0, 'Criança', oldChildren);
+  if (childrenSelect) childrenSelect.addEventListener('change', function(){
     renderList('children_names', this.value, 'Criança');
     updatePeopleBadge();
+    syncProductLimits();
   });
 
-  // NOVO: DAY selector
+  // DAY selector
   syncDay();
-  document.getElementById('ticket_type').addEventListener('change', syncDay);
+  var ticket = getEl('ticket_type');
+  if (ticket) ticket.addEventListener('change', syncDay);
 
-  // NOVO: trade_role
+  // trade_role
   syncDonation();
-  document.getElementById('trade_role').addEventListener('change', syncDonation);
+  var trade = getEl('trade_role');
+  if (trade) trade.addEventListener('change', syncDonation);
 
+  // primeira sincronização
   updatePeopleBadge();
+  syncProductLimits();
 });
 </script>
 @endpush
+
 
