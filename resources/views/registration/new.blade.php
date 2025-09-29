@@ -70,11 +70,11 @@
                 </div>
                 <div id="spouse_block" class="col-12 col-lg-9" style="display:none">
                     <div class="row mb-2">
-                        <div class="col-8">
+                        <div class="col-7">
                             <label class="form-label fw-bold">Nome do cônjuge</label>
                             <input class="form-control" name="spouse_name" value="{{ old('spouse_name') }}">
                         </div>
-                        <div class="col-4">
+                        <div class="col-5">
                             <label class="form-label">Indicativo <span class="text-muted">(opcional)</span></label>
                             <input class="form-control text-uppercase" name="spouse_callsign"
                                 value="{{ old('spouse_callsign') }}">
