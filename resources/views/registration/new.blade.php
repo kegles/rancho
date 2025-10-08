@@ -178,7 +178,7 @@
                         <div class="row align-items-center g-2 mb-2 product-row"
                             data-sku="{{ $sku }}"
                             data-ischildhalf="{{ $p->is_child_half ? 1 : 0 }}">
-                        <div class="col-md-5">
+                        <div class="col-md-6">
                             <label class="form-label mb-0" for="qty_full_{{ $sku }}">
                             <strong>{{ $p->name }}</strong>
                             — R$ {{ number_format($p->price/100, 2, ',', '.') }}
