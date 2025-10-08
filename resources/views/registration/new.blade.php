@@ -187,7 +187,7 @@
 
                         <div class="col-md-3">
                             <div class="input-group input-group-sm">
-                            <span class="input-group-text">Inteira</span>
+                            <span class="input-group-text">{{ $p->is_child_half ? 'Inteira' : 'Unidades' }}</span>
                             @php $curFull = max(0, $qtyFull); @endphp
                             <select id="qty_full_{{ $sku }}" name="products[{{ $sku }}][qty_full]" class="form-select form-select-sm qty-full">
                                 {{-- opções serão recriadas pelo JS; estas iniciais são só para primeira renderização --}}
@@ -221,33 +221,6 @@
 
                 </div>
             </div>
-
-
-            {{-- Troca-Troca --}}
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">Troca-Troca (opcional)</div>
-                    <div class="card-body row g-3">
-                    <div class="col-md-6 pb-5">
-                        <label class="form-label">Sou:</label>
-                        @php $role = old('trade_role',''); @endphp
-                        <select name="trade_role" id="trade_role" class="form-select">
-                            <option value="" @selected($role==='')>Não vou participar</option>
-                            <option value="AMADOR" @selected($role==='AMADOR')>Radioamador (itens pessoais usados)</option>
-                            <option value="REVENDEDOR" @selected($role==='REVENDEDOR')>Revendedor (doação mínima R$ 150,00)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6" id="donation-field" style="display:none">
-                        <label class="form-label fw-bold">Compromisso de doação (em reais)</label>
-                        <input type="number" name="trade_donation_pledge"
-                            value="{{ old('trade_donation_pledge')??'150' }}" min="150" step="1"  class="form-control">
-                        <div class="form-text">Valor mínimo: R$ 150,00</div>
-                    </div>
-                    </div>
-                </div>
-            </div>
-
-
 
           <div class="col-12 d-flex gap-2">
             <button class="btn btn-primary">Próximo passo</button>
@@ -398,12 +371,6 @@ function renderList(containerId, count, baseName, oldValues){
   }
 }
 
-function syncDonation(){
-  var roleSelect = getEl('trade_role');
-  var donationDiv = getEl('donation-field');
-  var isRevendedor = roleSelect && roleSelect.value === 'REVENDEDOR';
-  if (donationDiv) donationDiv.style.display = isRevendedor ? 'block' : 'none';
-}
 
 function syncDay(){
   var ticketEl = getEl('ticket_type');
@@ -445,10 +412,6 @@ document.addEventListener('DOMContentLoaded', function(){
   var ticket = getEl('ticket_type');
   if (ticket) ticket.addEventListener('change', syncDay);
 
-  // trade_role
-  syncDonation();
-  var trade = getEl('trade_role');
-  if (trade) trade.addEventListener('change', syncDonation);
 
   // primeira sincronização
   updatePeopleBadge();

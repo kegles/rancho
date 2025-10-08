@@ -122,21 +122,6 @@ class RegistrationController extends Controller
             if ($i < $childrenCount && $n) $attendees[] = ['role'=>'CHILD','label'=>'Criança','name'=>trim($n)];
         }
 
-        // 7) Doação de revendedor
-        $role          = $data['trade_role'] ?? null;
-        $donationCents = $this->moneyToCents($data['trade_donation_pledge'] ?? 0);
-        if ($role === 'REVENDEDOR' && $donationCents > 0) {
-            $items[] = [
-                'sku'          => 'DONATION',
-                'name'         => 'Doação Revendedor',
-                'unit_price'   => $donationCents,
-                'qty_full'     => 1,
-                'qty_half'     => 0,
-                'subtotal'     => $donationCents,
-                'accepts_half' => false,
-            ];
-            $total += $donationCents;
-        }
 
         // 8) Draft
         $draft = [
@@ -189,8 +174,6 @@ class RegistrationController extends Controller
                 'email'                 => $d['email'] ?? null,
                 'phone'                 => $d['phone'] ?? null,
                 'category_code'         => $d['category_code'], // V / R / E
-                'trade_role'            => $d['trade_role'] ?? null,
-                'trade_donation_pledge' => $d['trade_donation_pledge'] ?? null, // reais
             ]);
 
             // 2) Registration (uma única criação, com badge_letter)
@@ -251,11 +234,6 @@ class RegistrationController extends Controller
             foreach ($c['items'] as $it) {
                 $sku       = $it['sku'] ?? null;
                 if (!$sku) continue;
-
-                // Se não é REVENDEDOR, nunca grava item de doação
-                if (($it['sku'] ?? null) === 'DONATION' && (($d['trade_role'] ?? null) !== 'REVENDEDOR')) {
-                    continue;
-                }
 
                 $p         = $catalog->get($sku);
                 if (!$p) continue; // segurança; após firstOrCreate, deve existir
