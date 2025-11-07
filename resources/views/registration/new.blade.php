@@ -173,8 +173,14 @@
                         $adults   = 1 + (old('has_spouse') ? 1 : 0) + (int) old('companions_count', 0);
                         $children = (int) old('children_count', 0);
 
-                        $defaultFull = $p->is_child_half ? $adults : ($adults + $children);
-                        $defaultHalf = $p->is_child_half ? $children : 0;
+                        if ($p->optional) {
+                            $defaultFull = 0;
+                            $defaultHalf = 0;
+                        }
+                        else {
+                            $defaultFull = $p->is_child_half ? $adults : ($adults + $children);
+                            $defaultHalf = $p->is_child_half ? $children : 0;
+                        }
 
                         $qtyFull = (int) old("products.$sku.qty_full", $defaultFull);
                         $qtyHalf = (int) old("products.$sku.qty_half", $defaultHalf);
@@ -282,23 +288,40 @@ function updatePeopleBadge(){
   if (elChildren) elChildren.textContent = 'Crianças: ' + counts.children;
 }
 
-function optionRange(selectEl, max, selected){
+function optionRange(selectEl, max, optional) {
   if (!selectEl) return;
-  var prev = (typeof selected !== 'undefined')
-               ? parseInt(String(selected),10) || 0
-               : (parseInt(String(selectEl.value || 0),10) || 0);
-  var newVal = Math.min(Math.max(prev, 0), Math.max(0, max|0));
+  max = Math.max(0, max | 0);
+  var prev = parseInt(String(selectEl.value || 0), 10) || 0;
+  var value;
+  if (optional) {
+    // Itens opcionais iniciam em 0; depois preservam a seleção do usuário dentro do novo limite
+    if (!selectEl.dataset.initialized) {
+      value = 0;
+    } else {
+      value = Math.min(Math.max(prev, 0), max);
+    }
+  } else {
+    // Itens NÃO opcionais sempre acompanham o máximo calculado
+    value = max;
+  }
+  // Recria opções 0..max
   var frag = document.createDocumentFragment();
-  for (var i=0; i<=max; i++){
+  for (var i = 0; i <= max; i++) {
     var opt = document.createElement('option');
     opt.value = String(i);
     opt.textContent = String(i);
-    opt.selected = true;
+    if (i === value) opt.selected = true;
     frag.appendChild(opt);
   }
   selectEl.innerHTML = '';
   selectEl.appendChild(frag);
+  // Segurança extra para o valor selecionado
+  selectEl.value = String(value);
+  // Marca como inicializado (evita forçar 0 novamente em opcionais)
+  selectEl.dataset.initialized = '1';
 }
+
+
 
 function syncProductLimits(){
   var counts = computeCounts();
@@ -309,23 +332,20 @@ function syncProductLimits(){
   for (var r=0; r<rows.length; r++){
     var row = rows[r];
 
-    if (row.getAttribute('data-optional') === '1') {
-      continue;
-    }
-
     var isHalf = row.getAttribute('data-ischildhalf') === '1';
     var fullSel = row.querySelector('.qty-full');
     var halfSel = row.querySelector('.qty-half');
+    var optional = row.getAttribute('data-optional') === '1';
 
     // regras:
     // - is_child_half = true  -> inteira: 0..adultos, meia: 0..crianças
     // - is_child_half = false -> inteira: 0..(adultos+crianças), meia: 0
     var maxFull = isHalf ? adults : (adults + children);
-    optionRange(fullSel, maxFull);
+    optionRange(fullSel, maxFull, optional);
 
     if (halfSel){
       var maxHalf = isHalf ? children : 0;
-      optionRange(halfSel, maxHalf);
+      optionRange(halfSel, maxHalf, optional);
     }
   }
 }

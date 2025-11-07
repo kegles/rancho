@@ -61,6 +61,7 @@ class RegistrationController extends Controller
         ];
         $total += $baseParticipant;
 
+        // Cônjuge (inteira)
         if ($hasSpouse) {
             $items[] = [
                 'sku'          => 'BASE_SPOUSE',
@@ -72,6 +73,20 @@ class RegistrationController extends Controller
                 'accepts_half' => false,
             ];
             $total += $baseParticipant;
+        }
+
+        // Acompanhantes (inteira por acompanhante)
+        if ($companionsCount > 0) {
+            $items[] = [
+                'sku'          => 'BASE_ACCOMP',
+                'name'         => 'Inscrição (Acompanhante)',
+                'unit_price'   => $baseParticipant,
+                'qty_full'     => $companionsCount,
+                'qty_half'     => 0,
+                'subtotal'     => $baseParticipant * $companionsCount,
+                'accepts_half' => false,
+            ];
+            $total += $baseParticipant * $companionsCount;
         }
 
         // 5.2) Demais produtos (com inteira/meia)
@@ -209,9 +224,10 @@ class RegistrationController extends Controller
 
             // 4.1) Garanta produtos técnicos para SKUs especiais
             $techNames = [
-                'BASE'        => 'Inscrição (Participante)',
-                'BASE_SPOUSE' => 'Inscrição (Cônjuge)',
-                'DONATION'    => 'Doação Revendedor',
+                'BASE'         => 'Inscrição (Participante)',
+                'BASE_SPOUSE'  => 'Inscrição (Cônjuge)',
+                'BASE_ACCOMP'  => 'Inscrição (Acompanhante)',
+                'DONATION'     => 'Doação Revendedor',
             ];
 
             foreach ($skus as $sku) {
