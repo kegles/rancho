@@ -161,6 +161,11 @@
                     @foreach ($products as $p)
                         @if (in_array($p->sku, ['BASE','BASE_SPOUSE','DONATION'])) @continue @endif
 
+                        @if ($p->active == false)
+                            {{-- produto inativo não deve ser exibido --}}
+                            @continue
+                        @endif
+
                         @php
                         $sku = $p->sku;
 
@@ -177,16 +182,19 @@
 
                         <div class="row align-items-center g-2 mb-2 product-row"
                             data-sku="{{ $sku }}"
-                            data-ischildhalf="{{ $p->is_child_half ? 1 : 0 }}">
+                            data-ischildhalf="{{ $p->is_child_half ? 1 : 0 }}"
+                            data-optional="{{ $p->optional ? 1 : 0 }}">
                         <div class="col-md-6 text-end px-2">
                             <label class="form-label mb-0" for="qty_full_{{ $sku }}">
-                                <strong>{{ $p->name }}</strong> — R$ {{ number_format($p->price/100, 2, ',', '.') }}:
+                                <strong>{{ $p->name }} {{ $p->optional? '(opcional)' : '' }}</strong> — R$ {{ number_format($p->price/100, 2, ',', '.') }}:
                             </label>
                         </div>
 
                         <div class="col-md-3">
                             <div class="input-group input-group-sm">
-                            <span class="input-group-text">{{ $p->is_child_half ? 'Inteira' : 'Unidades' }}</span>
+                            <span class="input-group-text">
+                                {{ $p->is_child_half ? 'Inteira' : 'Unidades' }}
+                            </span>
                             @php $curFull = max(0, $qtyFull); @endphp
                             <select id="qty_full_{{ $sku }}" name="products[{{ $sku }}][qty_full]" class="form-select form-select-sm qty-full">
                                 {{-- opções serão recriadas pelo JS; estas iniciais são só para primeira renderização --}}
@@ -300,8 +308,12 @@ function syncProductLimits(){
   var rows = document.querySelectorAll('.product-row');
   for (var r=0; r<rows.length; r++){
     var row = rows[r];
-    var isHalf = row.getAttribute('data-ischildhalf') === '1';
 
+    if (row.getAttribute('data-optional') === '1') {
+      continue;
+    }
+
+    var isHalf = row.getAttribute('data-ischildhalf') === '1';
     var fullSel = row.querySelector('.qty-full');
     var halfSel = row.querySelector('.qty-half');
 

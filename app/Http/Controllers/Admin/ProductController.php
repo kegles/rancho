@@ -38,7 +38,7 @@ class ProductController extends Controller
     {
         try {
             $product = new Product();
-            $product->fill($request->only(['sku','name','is_child_half','sort_order','active']));
+            $product->fill($request->only(['sku','name','is_child_half','sort_order','active','optional']));
             $product->price_brl = $request->input('price_brl'); // mutator converte p/ centavos
             $product->save();
 
@@ -62,7 +62,7 @@ class ProductController extends Controller
     public function update(ProductUpdateRequest $request, Product $product): \Illuminate\Http\RedirectResponse
     {
         try {
-            $product->fill($request->only(['sku','name','is_child_half','sort_order','active']));
+            $product->fill($request->only(['sku','name','is_child_half','sort_order','active','optional']));
             $product->price_brl = $request->input('price_brl');
             $product->save();
 

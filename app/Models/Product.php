@@ -6,7 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model {
-    protected $fillable = ['sku','name','price','is_child_half','sort_order','active'];
+    protected $fillable = ['sku','name','price','is_child_half','sort_order','active', 'optional'];
 
     protected $casts = [
         'price' => 'integer', // centavos

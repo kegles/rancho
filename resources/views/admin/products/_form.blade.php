@@ -66,9 +66,16 @@
   </select>
 </div>
 
-
   {{-- Flags --}}
   <div class="col-12 d-flex flex-wrap gap-4">
+
+    {{-- Opcional --}}
+    <div class="form-check mb-3">
+        <input type="checkbox" name="optional" value="1" class="form-check-input"
+             id="optional" {{ old('optional', $product->optional ?? false) ? 'checked' : '' }}>
+        <label for="optional" class="form-check-label">Produto opcional (não altera com número de participantes)</label>
+    </div>
+
     {{-- Meia para crianças --}}
     <div class="form-check">
       {{-- hidden para enviar 0 quando desmarcado --}}
