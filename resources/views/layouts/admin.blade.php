@@ -29,7 +29,7 @@
                 Inscrições
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item me-4">
                 <a href="{{ route('admin.products.index') }}"
                 @class(['nav-link', 'active fw-bold' => request()->routeIs('admin.products.*')])
                 @if (request()->routeIs('admin.products.*')) aria-current="page" @endif>
@@ -37,7 +37,7 @@
                 </a>
             </li>
             {{-- Novo menu Relatórios --}}
-            <li class="nav-item dropdown">
+            <li class="nav-item me-4 dropdown">
                 <a class="nav-link dropdown-toggle @if(request()->routeIs('admin.reports.*')) active fw-bold @endif"
                 href="#"
                 role="button"
