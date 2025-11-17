@@ -8,18 +8,52 @@ use App\Services\PricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-
+use Carbon\Carbon;
 
 class RegistrationController extends Controller
 {
+
+    /**
+     * Verifica se as inscrições estão encerradas com base em RANCHO_REG_DEADLINE.
+     */
+    private function registrationsClosed(): bool
+    {
+        $deadline = env('RANCHO_REG_DEADLINE');
+        if (!$deadline) {
+            // Sem deadline definido = inscrições sempre abertas
+            return false;
+        }
+
+        $tz = config('app.timezone', 'America/Sao_Paulo');
+
+        return Carbon::now($tz)->greaterThanOrEqualTo(
+            Carbon::parse($deadline, $tz)
+        );
+    }
+
+
     public function createForm(Request $request)
     {
+        // Se passou do prazo, mostra apenas a tela de encerramento
+        if ($this->registrationsClosed()) {
+            return view('registration.closed');
+        }
+
         $products = Product::orderBy('sort_order','asc')->get();
         return view('registration.new', compact('products'));
     }
 
+
     public function preview(StoreRegistrationRequest $req)
     {
+
+        // Bloqueia tentativa de seguir no fluxo após o prazo
+        if ($this->registrationsClosed()) {
+            return redirect()
+                ->route('registration.form')
+                ->with('error', 'Inscrições encerradas.');
+        }
+
         // 1) Dados validados
         $data = $req->validated();
 
@@ -169,6 +203,14 @@ class RegistrationController extends Controller
 
     public function confirm(Request $req)
     {
+
+        // Se alguém tentar confirmar depois do prazo
+        if ($this->registrationsClosed()) {
+            return redirect()
+                ->route('registration.form')
+                ->with('error', 'Inscrições encerradas.');
+        }
+
         $draft = session('reg.draft');
         abort_unless($draft, 400, 'Sessão expirada. Refaça a inscrição.');
 
