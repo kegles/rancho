@@ -29,7 +29,7 @@ class RegistrationsController extends Controller
         if ($req->filled('status')) $q->where('status', $req->string('status'));
         if ($req->filled('category')) $q->whereHas('participant', fn($qq)=>$qq->where('category_code',$req->string('category')));
 
-        $regs = $q->paginate(20)->withQueryString();
+        $regs = $q->paginate(200)->withQueryString();
         return view('admin.registrations.index', compact('regs'));
     }
 
