@@ -21,7 +21,7 @@ class ProductController extends Controller
         $products = Product::query()
         ->when($q, fn($qb) => $qb->where('name','like',"%{$q}%")->orWhere('sku','like',"%{$q}%"))
         ->orderBy('sort_order','asc')
-        ->paginate(20)
+        ->paginate(200)
         ->withQueryString();
         return view('admin.products.index', compact('products','q'));
     }
