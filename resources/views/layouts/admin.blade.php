@@ -36,6 +36,28 @@
                 Produtos
                 </a>
             </li>
+            {{-- Novo menu Relatórios --}}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle @if(request()->routeIs('admin.reports.*')) active fw-bold @endif"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+                    Relatórios
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="{{ route('admin.reports.forms') }}">
+                            Fichas de Inscrição
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('admin.reports.by_product') }}">
+                            Inscrições por produto
+                        </a>
+                    </li>
+                </ul>
+            </li>
         </ul>
     </div>
   </div>

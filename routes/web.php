@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RegistrationsController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Middleware\OrgAuth;
+use App\Http\Controllers\Admin\AdminReportController;
+
 
 Route::redirect('/', '/registration/new');
 
@@ -43,4 +45,9 @@ Route::prefix('admin')->middleware('org')->group(function(){
     Route::put('products/{product}',           [ProductController::class, 'update'])->name('admin.products.update');
     Route::patch('products/{product}',         [ProductController::class, 'update'])->name('admin.products.update');
     Route::delete('products/{product}',        [ProductController::class, 'destroy'])->name('admin.products.destroy');
+    //-- reports
+    Route::get('reports/forms', [AdminReportController::class, 'forms'])
+        ->name('admin.reports.forms');
+    Route::get('reports/by-product', [AdminReportController::class, 'byProduct'])
+        ->name('admin.reports.by_product');
 });
